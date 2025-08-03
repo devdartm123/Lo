@@ -1,0 +1,164 @@
+local UserInputService = game:GetService("UserInputService")
+local Players = game:GetService("Players")
+
+local player = Players.LocalPlayer
+local mouse = player:GetMouse()
+local character = player.Character or player.CharacterAdded:Wait()
+local humanoid = character:WaitForChild("Humanoid")
+
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "DartUI"
+screenGui.ResetOnSpawn = false
+screenGui.Parent = player:WaitForChild("PlayerGui")
+
+local introFrame = Instance.new("Frame")
+introFrame.Name = "IntroFrame"
+introFrame.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
+introFrame.BackgroundTransparency = 0.6
+introFrame.Size = UDim2.new(1, 0, 1, 0)
+introFrame.Parent = screenGui
+
+local introLabel = Instance.new("TextLabel")
+introLabel.Name = "IntroLabel"
+introLabel.Text = "DART"
+introLabel.Font = Enum.Font.SourceSansBold
+introLabel.TextSize = 100
+introLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+introLabel.TextStrokeTransparency = 0
+introLabel.BackgroundTransparency = 1
+introLabel.Size = UDim2.new(1, 0, 1, 0)
+introLabel.Parent = introFrame
+
+local mainFrame = Instance.new("Frame")
+mainFrame.Name = "MainFrame"
+mainFrame.Size = UDim2.new(0, 300, 0, 150)
+mainFrame.Position = UDim2.new(0.5, -150, 0.5, -75)
+mainFrame.BackgroundColor3 = Color3.fromRGB(200, 0, 0)
+mainFrame.BorderColor3 = Color3.fromRGB(255, 255, 255)
+mainFrame.BorderSizePixel = 2
+mainFrame.Draggable = true
+mainFrame.Active = true
+mainFrame.Visible = false
+mainFrame.Parent = screenGui
+
+local titleBar = Instance.new("TextLabel")
+titleBar.Name = "TitleBar"
+titleBar.Size = UDim2.new(1, 0, 0, 30)
+titleBar.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+titleBar.Text = " DART"
+titleBar.Font = Enum.Font.SourceSansBold
+titleBar.TextSize = 20
+titleBar.TextColor3 = Color3.fromRGB(200, 0, 0)
+titleBar.TextXAlignment = Enum.TextXAlignment.Left
+titleBar.Parent = mainFrame
+
+local closeButton = Instance.new("TextButton")
+closeButton.Name = "CloseButton"
+closeButton.Size = UDim2.new(0, 30, 1, 0)
+closeButton.Position = UDim2.new(1, -30, 0, 0)
+closeButton.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
+closeButton.Text = "X"
+closeButton.Font = Enum.Font.SourceSansBold
+closeButton.TextSize = 20
+closeButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+closeButton.Parent = titleBar
+
+local headLabel = Instance.new("TextLabel")
+headLabel.Name = "HeadLabel"
+headLabel.Size = UDim2.new(1, -20, 0, 30)
+headLabel.Position = UDim2.new(0, 10, 0, 40)
+headLabel.BackgroundTransparency = 1
+headLabel.Text = "Big Head"
+headLabel.Font = Enum.Font.SourceSans
+headLabel.TextSize = 18
+headLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+headLabel.TextXAlignment = Enum.TextXAlignment.Left
+headLabel.Parent = mainFrame
+
+local headValueLabel = Instance.new("TextLabel")
+headValueLabel.Name = "HeadValueLabel"
+headValueLabel.Size = UDim2.new(1, -20, 0, 30)
+headValueLabel.Position = UDim2.new(0, 10, 0, 40)
+headValueLabel.BackgroundTransparency = 1
+headValueLabel.Text = "1"
+headValueLabel.Font = Enum.Font.SourceSansBold
+headValueLabel.TextSize = 18
+headValueLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+headValueLabel.TextXAlignment = Enum.TextXAlignment.Right
+headValueLabel.Parent = mainFrame
+
+local sliderBar = Instance.new("Frame")
+sliderBar.Name = "SliderBar"
+sliderBar.Size = UDim2.new(1, -20, 0, 10)
+sliderBar.Position = UDim2.new(0, 10, 0, 80)
+sliderBar.BackgroundColor3 = Color3.fromRGB(100, 0, 0)
+sliderBar.BorderSizePixel = 0
+sliderBar.Parent = mainFrame
+
+local sliderKnob = Instance.new("Frame")
+sliderKnob.Name = "SliderKnob"
+sliderKnob.Size = UDim2.new(0, 16, 0, 16)
+sliderKnob.Position = UDim2.new(0, -8, 0.5, -8)
+sliderKnob.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+sliderKnob.BorderSizePixel = 0
+sliderKnob.Parent = sliderBar
+
+local function updateHeadSize(value)
+	if not humanoid then return end
+
+	local minScale = 1
+	local maxScale = 4
+	local scale = minScale + ((value - 1) / (30 - 1)) * (maxScale - minScale)
+	
+	if humanoid:FindFirstChild("HeadScale") then
+		humanoid.HeadScale.Value = scale
+	else
+		local headScaleValue = Instance.new("NumberValue")
+		headScaleValue.Name = "HeadScale"
+		headScaleValue.Value = scale
+		headScaleValue.Parent = humanoid
+	end
+end
+
+local isDraggingSlider = false
+local function handleSlider(input)
+	local mouseX = input.Position.X
+	local barStart = sliderBar.AbsolutePosition.X
+	local barWidth = sliderBar.AbsoluteSize.X
+
+	local knobX = math.clamp(mouseX - barStart, 0, barWidth)
+	sliderKnob.Position = UDim2.new(0, knobX - (sliderKnob.AbsoluteSize.X / 2), 0.5, -8)
+
+	local percentage = knobX / barWidth
+	local value = math.floor(1 + percentage * 29)
+	
+	headValueLabel.Text = tostring(value)
+	updateHeadSize(value)
+end
+
+sliderBar.InputBegan:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+		isDraggingSlider = true
+		handleSlider(input)
+	end
+end)
+
+UserInputService.InputChanged:Connect(function(input)
+	if isDraggingSlider and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+		handleSlider(input)
+	end
+end)
+
+UserInputService.InputEnded:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+		isDraggingSlider = false
+	end
+end)
+
+closeButton.MouseButton1Click:Connect(function()
+	mainFrame.Visible = not mainFrame.Visible
+end)
+
+task.wait(2)
+introFrame:Destroy()
+mainFrame.Visible = true
